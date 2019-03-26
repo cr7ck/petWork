@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>기본채팅창</title>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet"
+   href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script
+   src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Popper JS -->
+<script
+   src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script
+   src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<!-- 모듈안에 js가있다  -->
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+
+<script>
+   var socket = io.connect();
+
+   // 서버에 접속할 때, 사용자명을 확인한다.
+   socket.on('connect', function() {
+      $('#btnChat').trigger('click');
+   });
+   
+   // 리스너: 서버에서 updatechat을 전송할 때마다  채팅 내용을 업데이트한다
+   socket.on('updatechat', function(username, data) {
+      $('#conversation').append('<b>' + username + ':</b> ' + data + '<br>');
+      window.scrollTo(0, document.body.scrollHeight);
+    	
+   });
+
+   // 리스너: 서버에서 updaterooms를 전송할 때마다, 인자 함수가 실행하여 클라이언트가 접속한 룸을 업데이트한다.
+   socket.on('updaterooms', function(rooms, current_room) {
+      $('#rooms').empty();
+      $.each(rooms, function(key, value) {
+         if (value == current_room) {
+            $('#rooms').append('<div>' + value + '</div>');
+         } else {
+            $('#rooms').append(
+                  '<div><a href="#" onclick="switchRoom(\'' + value
+                        + '\')">' + value + '</a></div>');
+         }
+      });
+   });
+   function switchRoom(room) {
+      socket.emit('switchRoom', room);
+   }
+   
+   function setNickName(){
+      var nickName = $('#nickName').val();
+      // 서버에 있는 adduser 함수를 호출하며, 하나의 파라미터(prompt의 반환 값)를 전달한다
+      socket.emit('adduser', nickName);
+   }
+   // 페이지 온로드 처리
+   $(function() {
+      // 클라이언트에서 SEND 버튼을 클릭할 때
+      $('#datasend').click(function() {
+         var message = $('#data').val();
+         $('#data').val('');
+         $('#data').focus();
+         // 서버에서 sendchat 함수를 실행하도록 알려주며, 하나의 파라미터를 전달한다
+         socket.emit('sendchat', message);
+      });
+
+      // 클라이언트에서 키보드의 엔터키를 입력할 때
+
+      $('#data').keypress(function(e) {
+         if (e.which == 13) {
+            $(this).blur();
+            // SEND 버튼의 클릭 이벤트를 실행한다
+            $('#datasend').focus().click();
+          
+         }
+      });
+
+   });
+</script>
+<style>
+.btn-primary {
+   background-color: #516055 !important;
+   border: #594A49 !important;
+}
+
+.btn-primary:hover {
+   background-color: #C8D8A8 !important;
+}
+
+.btn-primary:focus, .btn-primary.focus {
+   box-shadow: 0 0 0 0.2rem #594A49 !important;
+}
+
+.btn-primary:not (:disabled ):not (.disabled ):active, .btn-primary:not
+    (:disabled ):not (.disabled ).active, .show>.btn-primary.dropdown-toggle
+   {
+   color: #fff !important;
+   background-color: #b8cecc !important;
+   border-color: #594A49 !important;
+}
+
+.btn-primary:not (:disabled ):not (.disabled ):active:focus,
+   .btn-primary:not (:disabled ):not (.disabled ).active:focus, .show>.btn-primary.dropdown-toggle:focus
+   {
+   box-shadow: 0 0 0 0.2rem #e0ede9 !important;
+}
+
+#conversation {
+   background-image:
+      url('https://dcassetcdn.com/design_img/3530652/743817/743817_19506097_3530652_e76865a4_image.jpg');
+   background-position: center;
+   background-repeat: no-repeat;
+   background-size: 250px;
+   background-attachment: fixed;
+}
+
+#pannel {
+   border: 1px solid #C8D8A8;
+}
+
+#pannel>div {
+   color: #fff;
+   background-color: #C8D8A8;
+   border-color: #C8D8A8;
+}
+
+#rooms>div {
+   margin: 0 20px 0 20px;
+}
+
+#rooms {
+   background-color: white;
+   border-top: 0px;
+}
+
+#nickName {
+   width: 300px;
+}
+
+#rooms>div:nth-child(1) {
+   color: #594A49;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+   border-top: 0px;
+}
+
+a:link, a:visited {
+   border-top: 1px solid #e0e0e04d;
+   color: #b4b8ac;
+   text-align: center;
+   text-decoration: none;
+   display: inline-block;
+}
+
+a:hover, a:active {
+   color: #C8D8A8;
+}
+
+#rooms>div {
+   border-top: 1px solid #e0e0e04d;
+}
+</style>
+</head>
+<body>
+   <div class="container">
+      
+        
+            <div class="panel panel-primary" id="pannel" style="width:115px; float: left;">
+               <div class="panel-heading top-bar">
+                  <div class="col-md-8 col-xs-8">
+                     <h5 class="panel-title">지역선택</h5>
+                  </div>
+               </div>
+               <table class="table table-striped table-hover mb-0">
+                  <tbody>
+                     <tr>
+                        <td id="rooms" class="px-0"></td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+
+         	<div>
+            <div id="conversation" style="overflow: scroll-y; float: left;"></div>
+            
+
+
+            </div>
+            <div style="float: right;">
+            <input id="data" style="display: inline; width: 300px"
+               class="form-control" /> <input type="button"
+               class="btn btn-primary" id="datasend" value="send" />
+            </div>
+         </div>
+   
+   <!-- 모달창 구현 -->
+   <button type="button" id="btnChat" style="display: none;"
+      data-toggle="modal" data-target='#chatModal'></button>
+   <div class="modal" tabindex="-1" role="dialog" id="chatModal"
+      data-backdrop="false">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <div class="modal-header">
+               <h5 class="modal-title">닉네임 설정</h5>
+            </div>
+            <div class="modal-body">
+               채팅에서 사용할 닉네임을 설정해주세요.<br /> <input type="text" id="nickName"
+                  class="form-control">
+            </div>
+            <div class="modal-footer">
+               <button type="button" class="btn btn-primary"
+                  onclick="setNickName();" data-dismiss="modal">확인</button>
+            </div>
+         </div>
+      </div>
+   </div>
+</body>
+</html>
